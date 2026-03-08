@@ -9,6 +9,12 @@
 
 <style>
 
+.required{
+color:red;
+font-weight:bold;
+margin-left:3px;
+}
+
 body{
 font-family: Arial;
 background: linear-gradient(135deg,#0c1f4a,#162e6e);
@@ -91,12 +97,6 @@ cursor:pointer;
 font-weight:bold;
 }
 
-.size.active{
-border-color:#0b1a3a;
-background:#0b1a3a;
-color:white;
-}
-
 .colors{
 display:flex;
 gap:12px;
@@ -142,15 +142,17 @@ font-weight:bold;
 
 <div class="card">
 
+<form id="pedidoForm">
+
 <div class="title">🛍 SDM CLOTHING STORE</div>
 
 <div class="code-box">
 
 <p>Clica no teu código de compra</p>
 
-<button class="code-btn" onclick="setCode('RCRD404')">RCRD404</button>
-<button class="code-btn" onclick="setCode('ANGL404')">ANGL404</button>
-<button class="code-btn" onclick="setCode('ANGL404')">NILZA404</button>
+<button type="button" class="code-btn" onclick="setCode('RCRD404')">RCRD404</button>
+<button type="button" class="code-btn" onclick="setCode('ANGL404')">ANGL404</button>
+<button type="button" class="code-btn" onclick="setCode('NILZA404')">NILZA404</button>
 
 </div>
 
@@ -160,11 +162,20 @@ font-weight:bold;
 <label>Nome</label>
 <input type="text" id="nome">
 
-<label>Sua Localização</label>
-<input type="text" id="local">
+<label>Sua Localização <span class="required">*</span></label>
+<input type="text" id="local" required>
 
-<label>Número de Telefone</label>
-<input type="tel" id="telefone">
+<label>Número de Telefone <span class="required">*</span></label>
+
+<input
+type="tel"
+id="telefone"
+placeholder="Ex: 841234567"
+pattern="[0-9]{9}"
+maxlength="9"
+inputmode="numeric"
+required
+>
 
 <label>Produto</label>
 
@@ -175,14 +186,25 @@ font-weight:bold;
 
 </select>
 
-<label>Tamanho</label>
+<label>Tamanho <span class="required">*</span></label>
 
 <div class="size-box">
 
-<div class="size" onclick="setSize(this)">S</div>
-<div class="size" onclick="setSize(this)">M</div>
-<div class="size" onclick="setSize(this)">L</div>
-<div class="size" onclick="setSize(this)">XL</div>
+<label class="size">
+<input type="checkbox" value="S"> S
+</label>
+
+<label class="size">
+<input type="checkbox" value="M"> M
+</label>
+
+<label class="size">
+<input type="checkbox" value="L"> L
+</label>
+
+<label class="size">
+<input type="checkbox" value="XL"> XL
+</label>
 
 </div>
 
@@ -198,35 +220,29 @@ font-weight:bold;
 </div>
 
 <label>Quantidade</label>
-<input type="number" id="quantidade" value="1" onchange="calcular()">
+<input type="number" id="quantidade" value="1" min="1" onchange="calcular()">
 
 <div class="total" id="total">
 Total: 750 MT
 </div>
 
-<button class="whatsapp" onclick="enviar()">
+<button type="submit" class="whatsapp">
 Enviar Pedido para WhatsApp
 </button>
+
+</form>
 
 </div>
 
 <script>
 
-let tamanhoSelecionado=""
+const form = document.getElementById("pedidoForm")
+const quantidadeInput = document.getElementById("quantidade")
+
 let corSelecionada=""
 
 function setCode(code){
 document.getElementById("codigo").value = code
-}
-
-function setSize(el){
-
-document.querySelectorAll(".size").forEach(s=>s.classList.remove("active"))
-
-el.classList.add("active")
-
-tamanhoSelecionado = el.innerText
-
 }
 
 function setColor(el,cor){
@@ -242,7 +258,6 @@ corSelecionada = cor
 function calcular(){
 
 let preco = document.getElementById("produto").value
-
 let quantidade = document.getElementById("quantidade").value
 
 let total = preco * quantidade
@@ -251,7 +266,14 @@ document.getElementById("total").innerHTML = "Total: " + total + " MT"
 
 }
 
-function enviar(){
+form.addEventListener("submit", function(e){
+
+e.preventDefault()
+
+if(!form.checkValidity()){
+form.reportValidity()
+return
+}
 
 let codigo = document.getElementById("codigo").value
 let nome = document.getElementById("nome").value
@@ -261,14 +283,35 @@ let produto = document.getElementById("produto").options[document.getElementById
 let quantidade = document.getElementById("quantidade").value
 let total = document.getElementById("total").innerText
 
+let tamanhosSelecionados = []
+
+document.querySelectorAll('.size input:checked').forEach(el=>{
+tamanhosSelecionados.push(el.value)
+})
+
+if(tamanhosSelecionados.length == 0){
+alert("Selecione pelo menos um tamanho.")
+return
+}
+
+if(tamanhosSelecionados.length > quantidade){
+alert("Número de tamanhos não pode ser maior que a quantidade.")
+return
+}
+
+if(corSelecionada == ""){
+alert("Selecione a cor da camiseta.")
+return
+}
+
 let mensagem = `*NOVO PEDIDO SDM*%0A
 Código: ${codigo}%0A
 Nome: ${nome}%0A
 Localização: ${local}%0A
 Telefone: ${telefone}%0A
 Produto: ${produto}%0A
-Tamanho: ${tamanhoSelecionado}%0A
 Cor: ${corSelecionada}%0A
+Tamanhos: ${tamanhosSelecionados.join(", ")}%0A
 Quantidade: ${quantidade}%0A
 ${total}`
 
@@ -278,9 +321,10 @@ let url = `https://wa.me/${numero}?text=${mensagem}`
 
 window.open(url)
 
-}
+})
 
 </script>
 
 </body>
 </html>
+
